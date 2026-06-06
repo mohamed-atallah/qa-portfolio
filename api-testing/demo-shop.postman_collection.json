@@ -1,0 +1,136 @@
+{
+  "info": {
+    "name": "Demo Shop — QA API Tests",
+    "description": "Sample API test collection (positive, negative, boundary, schema, security) for a demo e-commerce API. Author: Mohamed Ali Atallah.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Auth - Login (positive)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status is 200', () => pm.response.to.have.status(200));",
+              "const body = pm.response.json();",
+              "pm.test('response has a token', () => pm.expect(body).to.have.property('token').that.is.a('string'));",
+              "if (body.token) pm.environment.set('token', body.token);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": { "raw": "{{base_url}}/auth/login", "host": ["{{base_url}}"], "path": ["auth", "login"] },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{user_email}}\",\n  \"password\": \"{{user_password}}\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Products - List (positive + schema)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status is 200', () => pm.response.to.have.status(200));",
+              "pm.test('response time < 800ms', () => pm.expect(pm.response.responseTime).to.be.below(800));",
+              "const body = pm.response.json();",
+              "pm.test('body is an array', () => pm.expect(body).to.be.an('array'));",
+              "pm.test('each product has id, name, price', () => {",
+              "  body.slice(0, 10).forEach(p => {",
+              "    pm.expect(p).to.have.property('id');",
+              "    pm.expect(p).to.have.property('name').that.is.a('string');",
+              "    pm.expect(p).to.have.property('price').that.is.a('number');",
+              "  });",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+        "url": { "raw": "{{base_url}}/products", "host": ["{{base_url}}"], "path": ["products"] }
+      }
+    },
+    {
+      "name": "Products - Search empty q (negative / BUG-003)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('should be 400 (not 500)', () => pm.response.to.have.status(400));",
+              "pm.test('error body is sanitized (no stack trace)', () => {",
+              "  pm.expect(pm.response.text()).to.not.match(/Exception|at [A-Za-z.]+\\(/);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+        "url": {
+          "raw": "{{base_url}}/products/search?q=",
+          "host": ["{{base_url}}"],
+          "path": ["products", "search"],
+          "query": [{ "key": "q", "value": "" }]
+        }
+      }
+    },
+    {
+      "name": "Checkout - No auth (security)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status is 401', () => pm.response.to.have.status(401));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": { "raw": "{{base_url}}/checkout", "host": ["{{base_url}}"], "path": ["checkout"] },
+        "body": { "mode": "raw", "raw": "{\n  \"cartId\": \"c-123\"\n}" }
+      }
+    },
+    {
+      "name": "Checkout - Coupon stacking (negative / BUG-002)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const body = pm.response.json();",
+              "pm.test('order total is never negative', () => pm.expect(body.orderTotal).to.be.at.least(0));",
+              "pm.test('second coupon is rejected', () => pm.expect(pm.response.code).to.be.oneOf([409, 422]));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{token}}" }
+        ],
+        "url": { "raw": "{{base_url}}/checkout/coupons", "host": ["{{base_url}}"], "path": ["checkout", "coupons"] },
+        "body": { "mode": "raw", "raw": "{\n  \"code\": \"FLAT80\"\n}" }
+      }
+    }
+  ]
+}

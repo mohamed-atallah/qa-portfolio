@@ -1,0 +1,77 @@
+pipeline {
+    agent any
+
+    parameters {
+        choice(name: 'TARGET_ENV', choices: ['staging', 'qa', 'prod'], description: 'Environment under test')
+    }
+
+    triggers {
+        cron('H 2 * * *') // nightly regression
+    }
+
+    options {
+        timeout(time: 30, unit: 'MINUTES')
+        timestamps()
+        buildDiscarder(logRotator(numToKeepStr: '20'))
+    }
+
+    environment {
+        BASE_URL = "https://${params.TARGET_ENV}.api.demo-shop.test/api/v1"
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('API Tests (Newman)') {
+            steps {
+                sh '''
+                    cd api-testing
+                    npx --yes newman run demo-shop.postman_collection.json \
+                        -e demo-shop.postman_environment.json \
+                        --env-var "base_url=$BASE_URL" \
+                        --reporters cli,junit \
+                        --reporter-junit-export newman-report.xml
+                '''
+            }
+        }
+
+        stage('UI Regression (Playwright)') {
+            steps {
+                sh '''
+                    npm ci
+                    npx playwright install --with-deps
+                    npx playwright test --reporter=html
+                '''
+            }
+        }
+
+        stage('Performance Smoke (k6)') {
+            steps {
+                // k6 returns a non-zero exit code if a threshold is breached -> fails the build
+                sh 'k6 run -e BASE_URL=$BASE_URL -e VUS=50 performance-k6/load-test.js'
+            }
+        }
+    }
+
+    post {
+        always {
+            junit allowEmptyResults: true, testResults: '**/newman-report.xml'
+            publishHTML(target: [
+                reportName: 'Playwright Report',
+                reportDir: 'playwright-report',
+                reportFiles: 'index.html',
+                keepAll: true,
+                alwaysLinkToLastBuild: true,
+                allowMissing: true
+            ])
+        }
+        failure {
+            echo "Build failed on ${params.TARGET_ENV}. Notifying QA channel."
+            // slackSend(channel: '#qa-alerts', message: "Regression failed: ${env.BUILD_URL}")
+        }
+    }
+}
