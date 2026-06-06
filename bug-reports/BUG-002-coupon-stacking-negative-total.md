@@ -24,19 +24,25 @@
 3. In the same session, apply coupon `FLAT80`.
 4. Observe the **Order Total** and the **Pay** button.
 
+## Actual Result
+- Both coupons apply. Order Total becomes **−SAR 30.00** (50 − 80).
+- The **Pay** button is enabled with a negative total.
+- API note: `POST /api/v1/checkout/coupons` accepts the second code and returns `"orderTotal": -30.00` with `200 OK` (server-side validation missing).
+
 ## Expected Result
 - Second coupon is rejected with a message: *"Only one coupon can be applied per order."*
 - Order Total remains **SAR 50.00**.
 
-## Actual Result
-- Both coupons apply. Order Total becomes **−SAR 30.00** (50 − 80).
-- The **Pay** button is enabled with a negative total.
+## Screenshots / Attachments
+| File | Description |
+|------|-------------|
+| `bug-002-negative-total.png` | Checkout summary showing Order Total of −SAR 30.00 with Pay enabled. |
+| `bug-002-coupon-api-response.png` | API response returning a negative `orderTotal`. |
 
-## Evidence
-- `evidence/negative-total.png` *(screenshot placeholder)*
-- API: `POST /api/v1/checkout/coupons` accepts the second code and returns `"orderTotal": -30.00` with `200 OK`.
+> Full-resolution screenshots and the API response body are attached to the ticket in JIRA.
+> See [`./screenshots`](./screenshots) for the storage convention.
 
 ## Notes
-- Reproducible **100%**. Also occurs via the API directly (server-side validation missing) → **not a UI-only bug**.
+- Reproducible **100%**. Also occurs via the API directly → **not a UI-only bug**.
 - **Business impact (why Critical):** allows orders at a negative price; direct financial loss and a clear fraud vector.
-- Recommended fix: enforce non-stackable rule **and** clamp `orderTotal` to a minimum of `0` server-side; add a regression test for both layers.
+- Recommended fix: enforce the non-stackable rule **and** clamp `orderTotal` to a minimum of `0` server-side; add a regression test for both layers.

@@ -23,17 +23,23 @@
 2. In the quantity field for *Wireless Mouse*, change `1` → `3`.
 3. Observe the line subtotal and the **Order Total**.
 
+## Actual Result
+- The line subtotal updates to **SAR 240.00**, **but the Order Total stays at SAR 80.00**.
+- The total only corrects itself after a full page refresh.
+- API note: `PATCH /api/v1/cart/items/882` returns `200` with the correct `lineTotal`, but the cart summary is rendered from cached client state and is not re-fetched.
+
 ## Expected Result
 - Line subtotal updates to **SAR 240.00** (3 × 80.00).
 - Order Total updates to reflect the new subtotal (plus any tax/shipping).
 
-## Actual Result
-- The line subtotal updates to **SAR 240.00**, **but the Order Total stays at SAR 80.00**.
-- The total only corrects itself after a full page refresh.
+## Screenshots / Attachments
+| File | Description |
+|------|-------------|
+| `bug-001-cart-total-stale.png` | Cart showing line subtotal SAR 240.00 while Order Total still reads SAR 80.00. |
+| `bug-001-network.har` | Captured `PATCH /cart/items/882` request/response. |
 
-## Evidence
-- `evidence/cart-total-stale.png` *(screenshot placeholder)*
-- Network: `PATCH /api/v1/cart/items/882` returns `200` with correct `lineTotal`, but the cart summary is rendered from cached client state and not re-fetched.
+> Full-resolution screenshots and the HAR/console log are attached to the ticket in JIRA.
+> See [`./screenshots`](./screenshots) for the storage convention.
 
 ## Notes
 - Reproducible **100%** of the time across Chrome, Firefox, and Safari → not browser-specific.

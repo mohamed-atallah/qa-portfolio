@@ -9,6 +9,8 @@ Each report is self-contained and reproducible.
 | [BUG-002](./BUG-002-coupon-stacking-negative-total.md) | Stacking two coupons produces a negative order total | Critical | High |
 | [BUG-003](./BUG-003-search-api-500-on-empty-query.md) | Search API returns HTTP 500 on empty `q` parameter | Major | Medium |
 
+Screenshots and attachments referenced by each report are stored in [`./screenshots`](./screenshots).
+
 ## Template
 
 ```
@@ -19,8 +21,10 @@ Priority:          High / Medium / Low
 Environment:       <build, OS, browser/device, API base URL>
 Preconditions:     <state required before steps>
 Steps to Reproduce: 1. ... 2. ... 3. ...
-Expected Result:   <what should happen>
 Actual Result:     <what actually happens>
-Evidence:          <screenshots / logs / response body>
-Notes:             <root-cause hints, frequency, workaround>
+Expected Result:   <what should happen>
+Screenshots / Attachments:
+                   - <file> — <caption>
+                   - <log/HAR> — <caption>
+Notes:             <root-cause hints, frequency, business impact, workaround>
 ```
