@@ -51,8 +51,12 @@ pipeline {
 
         stage('Performance Smoke (k6)') {
             steps {
-                // k6 returns a non-zero exit code if a threshold is breached -> fails the build
-                sh 'k6 run -e BASE_URL=$BASE_URL -e VUS=50 performance-k6/load-test.js'
+                // Build the TypeScript k6 script, then run it.
+                // k6 returns a non-zero exit code if a threshold is breached -> fails the build.
+                dir('performance-k6') {
+                    sh 'npm ci && npm run build'
+                }
+                sh 'k6 run -e BASE_URL=$BASE_URL -e VUS=50 performance-k6/dist/load-test.js'
             }
         }
     }

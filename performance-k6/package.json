@@ -1,0 +1,17 @@
+{
+  "name": "qa-portfolio-k6",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "TypeScript k6 performance tests for the demo e-commerce API.",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "build": "esbuild src/load-test.ts --bundle --outfile=dist/load-test.js --external:k6 --external:k6/* --format=esm --platform=neutral",
+    "test": "npm run build && k6 run dist/load-test.js"
+  },
+  "devDependencies": {
+    "@types/k6": "^0.54.0",
+    "esbuild": "^0.23.0",
+    "typescript": "^5.5.4"
+  }
+}

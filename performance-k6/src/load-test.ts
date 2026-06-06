@@ -1,14 +1,15 @@
 import http from 'k6/http';
 import { check, sleep } from 'k6';
 import { Rate } from 'k6/metrics';
+import { Options } from 'k6/options';
 
 // Custom metric: checkout error rate
 const checkoutErrors = new Rate('checkout_errors');
 
-const BASE_URL = __ENV.BASE_URL || 'https://staging.api.demo-shop.test/api/v1';
-const PEAK_VUS = Number(__ENV.VUS || 200);
+const BASE_URL: string = __ENV.BASE_URL || 'https://staging.api.demo-shop.test/api/v1';
+const PEAK_VUS: number = Number(__ENV.VUS || 200);
 
-export const options = {
+export const options: Options = {
   scenarios: {
     browse_and_checkout: {
       executor: 'ramping-vus',
@@ -29,7 +30,7 @@ export const options = {
   },
 };
 
-export default function () {
+export default function (): void {
   // 1) Browse the catalog
   const list = http.get(`${BASE_URL}/products`, { tags: { name: 'products_list' } });
   check(list, {
